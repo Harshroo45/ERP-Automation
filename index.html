@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ERP Schema Transformer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080909;
+  --surface:#0e1011;
+  --card:#121415;
+  --card2:#0b0c0d;
+  --border:#1e2022;
+  --border2:#262a2c;
+  --border3:#2e3336;
+  --teal:#00e5c8;
+  --teal2:#00b8a2;
+  --teal-bg:rgba(0,229,200,.06);
+  --amber:#ffb638;
+  --amber-bg:rgba(255,182,56,.06);
+  --green:#30d97a;
+  --green-bg:rgba(48,217,122,.06);
+  --red:#ff5060;
+  --blue:#5599ff;
+  --violet:#a78bfa;
+  --text:#dde1e7;
+  --text2:#9aa3ad;
+  --text3:#555d66;
+  --head:'Syne',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html{font-size:14px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+
+/* ─── BACKGROUND GRID ─── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,200,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,200,.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ─── HEADER ─── */
+header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(8,9,9,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border2);
+  padding:0 32px;height:60px;
+  display:flex;align-items:center;gap:20px;
+}
+.logo-mark{
+  width:32px;height:32px;border-radius:6px;
+  background:linear-gradient(135deg,var(--teal),#006d62);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--head);font-weight:800;font-size:13px;color:#000;
+  letter-spacing:-.01em;flex-shrink:0;
+}
+.logo-text{font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--text)}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:.02em}
+.header-pills{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hpill{
+  padding:4px 10px;border-radius:20px;border:1px solid var(--border2);
+  font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--text3);
+}
+.hpill.live{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+
+/* ─── MAIN ─── */
+main{
+  position:relative;z-index:1;
+  max-width:1120px;margin:0 auto;
+  padding:36px 24px 80px;
+  display:flex;flex-direction:column;gap:24px;
+}
+
+/* ─── SECTION HEADER ─── */
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec-head{
+  display:flex;align-items:center;gap:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--border);
+}
+.sec-num{
+  width:22px;height:22px;border-radius:4px;
+  background:var(--teal-bg);border:1px solid rgba(0,229,200,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:var(--teal);letter-spacing:.05em;
+}
+.sec-title{font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--text2);text-transform:uppercase}
+.sec-desc{font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:.02em}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:8px;padding:20px 22px;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:8px;
+  background:linear-gradient(135deg,rgba(0,229,200,.025) 0%,transparent 60%);
+  pointer-events:none;
+}
+
+/* ─── FILE INPUT GRID ─── */
+.file-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.file-grid{grid-template-columns:1fr}}
+
+.file-slot-label{
+  font-size:9px;font-weight:700;letter-spacing:.1em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.fsl-tag{
+  padding:2px 7px;border-radius:2px;font-size:8px;font-weight:700;
+  letter-spacing:.08em;
+}
+.fsl-tag.f1{background:rgba(0,229,200,.15);color:var(--teal)}
+.fsl-tag.f2{background:rgba(255,182,56,.15);color:var(--amber)}
+
+.drop-zone{
+  border:1px dashed var(--border3);border-radius:6px;
+  padding:20px 16px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;background:var(--card2);
+}
+.drop-zone:hover,.drop-zone.dragover{
+  border-color:var(--teal);background:var(--teal-bg);
+}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:22px;margin-bottom:8px;display:block}
+.dz-title{font-size:11px;font-weight:600;color:var(--text);letter-spacing:.02em}
+.dz-sub{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.04em}
+.dz-status{
+  margin-top:8px;font-size:9px;color:var(--green);word-break:break-all;
+  display:none;padding:5px 8px;background:var(--green-bg);
+  border-radius:3px;border:1px solid rgba(48,217,122,.2);
+}
+.drop-zone.loaded .dz-status{display:block}
+.drop-zone.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg)}
+
+/* ─── MODE TOGGLE ─── */
+.mode-wrap{display:flex;flex-direction:column;gap:10px}
+.mode-toggle{
+  display:inline-flex;background:var(--card2);
+  border:1px solid var(--border2);border-radius:6px;padding:3px;gap:2px;
+  align-self:flex-start;
+}
+.mode-btn{
+  padding:5px 13px;border-radius:4px;border:none;cursor:pointer;
+  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;
+  transition:all .15s;background:transparent;color:var(--text3);
+}
+.mode-btn.active{background:var(--teal);color:#000;box-shadow:0 1px 8px rgba(0,229,200,.3)}
+.mode-btn:not(.active):hover{color:var(--teal);background:var(--teal-bg)}
+
+/* ─── PASTE AREA ─── */
+.paste-area{
+  width:100%;min-height:130px;max-height:240px;
+  background:var(--card2);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--mono);font-size:10px;
+  padding:12px 14px;border-radius:6px;resize:vertical;
+  transition:border-color .15s;line-height:1.8;
+}
+.paste-area:focus{outline:none;border-color:var(--teal)}
+.paste-area::placeholder{color:var(--text3)}
+.paste-counter{
+  display:flex;align-items:center;gap:8px;
+  margin-top:6px;font-size:10px;color:var(--text3);
+}
+.paste-counter .cnt{
+  color:var(--teal);font-weight:600;
+  padding:2px 8px;background:var(--teal-bg);border-radius:3px;
+}
+
+/* ─── SCHEMA TABLE ─── */
+.schema-wrap{overflow:hidden;border-radius:8px;border:1px solid var(--border2)}
+.schema-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.schema-tbl thead{background:var(--card2)}
+.schema-tbl th{
+  padding:8px 14px;text-align:left;font-size:8px;font-weight:700;
+  letter-spacing:.12em;color:var(--text3);text-transform:uppercase;
+  border-bottom:1px solid var(--border2);
+}
+.schema-tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.schema-tbl tr:last-child td{border-bottom:none}
+.schema-tbl tr:hover td{background:rgba(255,255,255,.01)}
+.col-name{font-family:var(--head);font-size:12px;font-weight:700;color:var(--teal)}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.1em;
+}
+.b-const  {background:rgba(85,153,255,.12);color:var(--blue);border:1px solid rgba(85,153,255,.2)}
+.b-dynamic{background:rgba(255,182,56,.12); color:var(--amber);border:1px solid rgba(255,182,56,.2)}
+.b-mapped {background:rgba(48,217,122,.12); color:var(--green);border:1px solid rgba(48,217,122,.2)}
+.b-deduped{background:rgba(0,229,200,.12);  color:var(--teal);border:1px solid rgba(0,229,200,.2)}
+.col-val{font-family:var(--mono);font-size:11px}
+.col-desc{font-size:10px;color:var(--text3)}
+
+/* ─── CONFIG GRID ─── */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.cfg-grid{grid-template-columns:1fr}}
+.cfg-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:760px){.cfg-row{grid-template-columns:1fr 1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field-lbl{
+  font-size:9px;font-weight:600;letter-spacing:.12em;
+  color:var(--text3);text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+.field-lbl .arrow{color:var(--teal);font-size:8px}
+.field-input{
+  background:var(--card2);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--mono);font-size:12px;font-weight:500;
+  padding:9px 12px;border-radius:5px;transition:all .15s;
+  letter-spacing:.03em;
+}
+.field-input:focus{outline:none;border-color:var(--teal);background:var(--teal-bg)}
+.field-input::placeholder{color:var(--text3);font-weight:400}
+.field-input.lg{font-size:14px;font-weight:600;padding:11px 14px}
+.field-hint{font-size:9px;color:var(--text3);line-height:1.6}
+.field-hint code{color:var(--teal);background:var(--teal-bg);padding:1px 4px;border-radius:2px}
+.field-select{
+  background:var(--card2);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--mono);font-size:11px;padding:9px 12px;border-radius:5px;
+  cursor:pointer;transition:all .15s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath fill='%23555d66' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+}
+.field-select:focus{outline:none;border-color:var(--teal)}
+.field-select option{background:#0e1011}
+.live-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:4px;
+  background:var(--amber-bg);border:1px solid rgba(255,182,56,.2);
+  font-size:10px;color:var(--amber);margin-top:2px;
+}
+.live-badge .lbl{color:var(--text3)}
+
+/* ─── RUN BUTTON ─── */
+.run-btn{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  color:#000;border:none;padding:13px 30px;
+  font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.1em;
+  border-radius:6px;cursor:pointer;
+  transition:all .2s;
+  display:flex;align-items:center;gap:10px;align-self:flex-start;
+  box-shadow:0 4px 20px rgba(0,229,200,.2);
+}
+.run-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.run-btn:hover::after{opacity:1}
+.run-btn:hover{box-shadow:0 6px 28px rgba(0,229,200,.35);transform:translateY(-1px)}
+.run-btn:active{transform:translateY(0);box-shadow:none}
+.run-btn:disabled{background:#1e2022;color:#3a4048;cursor:not-allowed;box-shadow:none;transform:none}
+
+/* ─── LOG ─── */
+.log-panel{
+  background:var(--card2);border:1px solid var(--border);border-radius:6px;
+  padding:12px 16px;font-size:10px;line-height:1.9;
+  min-height:56px;max-height:180px;overflow-y:auto;
+}
+.log-panel:empty::before{content:'// Awaiting execution…';color:var(--text3)}
+.log-line{display:block}
+.log-line.info {color:var(--text3)}
+.log-line.ok   {color:var(--green)}
+.log-line.warn {color:var(--amber)}
+.log-line.error{color:var(--red)}
+.log-line.head {color:var(--blue);font-weight:600}
+.log-ts{color:#2a2e32;margin-right:8px;user-select:none}
+
+/* ─── STATS GRID ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:7px;padding:16px 18px;position:relative;overflow:hidden;
+}
+.stat::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:7px 7px 0 0;
+}
+.stat.teal::before{background:var(--teal)}
+.stat.red::before{background:var(--red)}
+.stat.green::before{background:var(--green)}
+.stat.amber::before{background:var(--amber)}
+.stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.stat-val{font-family:var(--head);font-size:26px;font-weight:800;line-height:1}
+.stat.teal  .stat-val{color:var(--teal)}
+.stat.red   .stat-val{color:var(--red)}
+.stat.green .stat-val{color:var(--green)}
+.stat.amber .stat-val{color:var(--amber)}
+.stat-sub{font-size:9px;color:var(--text3);margin-top:5px}
+
+/* ─── PREVIEW TABLE ─── */
+.prev-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border2)}
+.prev-tbl{width:100%;border-collapse:collapse;font-size:10px;min-width:600px}
+.prev-tbl thead{background:var(--card2)}
+.prev-tbl th{
+  padding:9px 14px;text-align:left;font-size:9px;
+  font-weight:700;letter-spacing:.1em;color:var(--teal);
+  border-bottom:1px solid var(--border2);white-space:nowrap;
+  text-transform:uppercase;
+}
+.prev-tbl td{padding:8px 14px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:10px}
+.prev-tbl tr:last-child td{border-bottom:none}
+.prev-tbl tr:hover td{background:rgba(0,229,200,.02)}
+.prev-tbl td.v{color:var(--text)}
+.prev-tbl td.c{color:var(--blue)}
+.prev-tbl td.d{color:var(--amber)}
+.prev-tbl .row-n{color:var(--text3);font-size:9px}
+
+/* ─── BATCH DOWNLOAD ─── */
+.batch-list{display:flex;flex-direction:column;gap:10px}
+.batch-item{
+  display:flex;align-items:center;gap:16px;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:7px;padding:16px 20px;
+  animation:slideUp .25s ease both;
+  transition:border-color .15s;
+}
+.batch-item:hover{border-color:var(--border3)}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.b-idx{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--amber-bg);border:1px solid rgba(255,182,56,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:var(--amber);flex-shrink:0;
+}
+.b-name{font-family:var(--head);font-size:14px;font-weight:700;color:var(--amber);min-width:220px}
+.b-meta{flex:1;font-size:10px;color:var(--text3);line-height:1.8}
+.b-meta span{color:var(--text)}
+.b-meta .fmtbadge{
+  display:inline-block;padding:1px 7px;border-radius:2px;font-size:8px;font-weight:700;
+  background:var(--teal-bg);color:var(--teal);border:1px solid rgba(0,229,200,.15);
+  letter-spacing:.06em;margin-left:6px;
+}
+.dl-btn{
+  display:flex;align-items:center;gap:7px;
+  background:transparent;border:1px solid var(--teal);color:var(--teal);
+  padding:9px 20px;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.08em;border-radius:5px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.dl-btn:hover{background:var(--teal);color:#000;box-shadow:0 2px 12px rgba(0,229,200,.25)}
+.dl-all{
+  display:flex;align-items:center;gap:8px;
+  background:transparent;border:1px solid var(--border3);color:var(--text2);
+  padding:8px 18px;font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.06em;border-radius:5px;cursor:pointer;
+  transition:all .15s;align-self:flex-start;
+}
+.dl-all:hover{border-color:var(--text2);color:var(--text)}
+.note-strip{
+  font-size:9px;color:var(--text3);line-height:1.8;
+  padding:10px 14px;background:var(--card2);border-radius:5px;
+  border:1px solid var(--border);
+}
+.note-strip span{color:var(--teal)}
+
+/* ─── DIVIDER ─── */
+.divider{height:1px;background:var(--border);margin:4px 0}
+
+/* ─── SPINNER ─── */
+.spinner{
+  display:inline-block;width:11px;height:11px;
+  border:2px solid rgba(0,229,200,.2);border-top-color:var(--teal);
+  border-radius:50%;animation:spin .6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">ET</div>
+  <div>
+    <div class="logo-text">ERP Schema Transformer</div>
+    <div class="logo-sub">Dedup · Remap · Format · Export</div>
+  </div>
+  <div class="header-pills">
+    <div class="hpill live">● CLIENT-SIDE</div>
+    <div class="hpill">ZERO DATA TRANSFER</div>
+    <div class="hpill">v1.2.0</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ══ 01 FILE INPUTS ══ -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num">01</div>
+    <div class="sec-title">File Inputs</div>
+    <div class="sec-desc">Upload source files for processing</div>
+  </div>
+  <div class="card">
+    <div class="file-grid">
+
+      <!-- Dummy List -->
+      <div>
+        <div class="file-slot-label">
+          <span class="fsl-tag f1">FILE 1</span>
+          Dummy List
+          <span style="color:var(--text3);font-weight:400">— new uncleaned batch</span>
+        </div>
+        <div class="drop-zone" id="dz1">
+          <input type="file" id="file1" accept=".xlsx,.xls,.csv"/>
+          <span class="dz-icon">📋</span>
+          <div class="dz-title">Drop file or click to browse</div>
+          <div class="dz-sub">ACCEPTS .XLSX · .XLS · .CSV</div>
+          <div class="dz-status" id="dz1-status"></div>
+        </div>
+      </div>
+
+      <!-- SQL / ERP Dump -->
+      <div>
+        <div class="file-slot-label">
+          <span class="fsl-tag f2">FILE 2</span>
+          SQL / ERP Dump
+          <span style="color:var(--text3);font-weight:400">— existing records</span>
+        </div>
+        <div class="mode-wrap">
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="modeFileBtn" onclick="setMode('file')">📂 FILE UPLOAD</button>
+            <button class="mode-btn" id="modePasteBtn" onclick="setMode('paste')">📋 PASTE CODES</button>
+          </div>
+
+          <div id="sqlFilePanel">
+            <div class="drop-zone" id="dz2">
+              <input type="file" id="file2" accept=".xlsx,.xls,.csv"/>
+              <span class="dz-icon">🗄️</span>
+              <div class="dz-title">Drop file or click to browse</div>
+              <div class="dz-sub">ACCEPTS .XLSX · .XLS · .CSV</div>
+              <div class="dz-status" id="dz2-status"></div>
+            </div>
+          </div>
+
+          <div id="sqlPastePanel" style="display:none">
+            <textarea class="paste-area" id="pasteInput"
+              placeholder="Paste im_code / Material Code values directly from SQL&#10;&#10;Accepted formats:&#10;  • One code per line&#10;  • Tab-separated (SQL grid copy)&#10;  • Comma or semicolon separated&#10;&#10;Example:&#10;MAT-00123&#10;MAT-00456&#10;MAT-00789"
+              oninput="updatePasteCount()"></textarea>
+            <div class="paste-counter">
+              Codes detected: <span class="cnt" id="pasteCountVal">0</span>
+              <span style="color:var(--text3);font-size:9px">— duplicates will be collapsed automatically</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ 02 OUTPUT SCHEMA ══ -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num">02</div>
+    <div class="sec-title">Output Schema Map</div>
+    <div class="sec-desc">6-column target layout</div>
+  </div>
+  <div class="schema-wrap">
+    <table class="schema-tbl">
+      <thead>
+        <tr>
+          <th style="width:130px">Column</th>
+          <th style="width:100px">Type</th>
+          <th>Source / Value</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="col-name">im_code</span></td>
+          <td><span class="badge b-deduped">DEDUPED</span></td>
+          <td class="col-val" style="color:var(--teal)">File 1 → <code style="background:var(--teal-bg);padding:1px 5px;border-radius:2px;font-size:10px">Material Code</code></td>
+          <td class="col-desc">Unique codes, cross-referenced against SQL source</td>
+        </tr>
+        <tr>
+          <td><span class="col-name">loc_type</span></td>
+          <td><span class="badge b-const">CONSTANT</span></td>
+          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"W"</code></td>
+          <td class="col-desc">Hardcoded for all rows</td>
+        </tr>
+        <tr>
+          <td><span class="col-name">im_loc</span></td>
+          <td><span class="badge b-dynamic">DYNAMIC</span></td>
+          <td class="col-val" style="color:var(--amber)">Location input box value</td>
+          <td class="col-desc">User-entered string injected into every row</td>
+        </tr>
+        <tr>
+          <td><span class="col-name">MRP_LCTYP</span></td>
+          <td><span class="badge b-const">CONSTANT</span></td>
+          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"W"</code></td>
+          <td class="col-desc">Hardcoded for all rows</td>
+        </tr>
+        <tr>
+          <td><span class="col-name">MRP_LCNO</span></td>
+          <td><span class="badge b-const">CONSTANT</span></td>
+          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"USTOR"</code></td>
+          <td class="col-desc">Hardcoded for all rows</td>
+        </tr>
+        <tr>
+          <td><span class="col-name">IM_DESCR</span></td>
+          <td><span class="badge b-mapped">MAPPED</span></td>
+          <td class="col-val" style="color:var(--green)">File 1 → <code style="background:var(--green-bg);padding:1px 5px;border-radius:2px;font-size:10px">Description</code></td>
+          <td class="col-desc">Paired by im_code key — exact match guaranteed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 03 CONFIGURATION ══ -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num">03</div>
+    <div class="sec-title">Configuration</div>
+    <div class="sec-desc">Set location, format, and column mappings</div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;gap:18px">
+
+    <div class="cfg-grid">
+      <div class="field">
+        <div class="field-lbl">Location Code <span class="arrow">→ im_loc</span></div>
+        <input type="text" id="locationInput" class="field-input lg" placeholder="e.g. SC455" oninput="updateLivePreview()"/>
+        <div class="field-hint">Injected into <code>im_loc</code> for every output row.</div>
+        <div id="livePreview" style="display:none">
+          <div class="live-badge"><span class="lbl">im_loc →</span> <strong id="lvValue"></strong></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Output File Format <span class="arrow">→ version</span></div>
+        <select id="versionSelect" class="field-select" onchange="updateVersionHint()">
+          <option value="biff8">Legacy XLS — Excel 5.0 / 97–2003  (.xls, BIFF8)</option>
+          <option value="xlsx" selected>Modern XLSX — Excel 2007+  (.xlsx, OOXML)</option>
+          <option value="csv">CSV — Comma-Separated Values  (.csv)</option>
+        </select>
+        <div class="field-hint" id="versionHint">Standard OOXML format. Compatible with Excel 2007 and later.</div>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border)"></div>
+
+    <div class="cfg-row">
+      <div class="field">
+        <div class="field-lbl">Material Code Column</div>
+        <input type="text" id="keyColMat" class="field-input" value="Material Code"/>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Description Column</div>
+        <input type="text" id="keyColDesc" class="field-input" value="Description"/>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Output Filename</div>
+        <input type="text" id="outFilename" class="field-input" value="transformed_output"/>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ 04 EXECUTE ══ -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-num">04</div>
+    <div class="sec-title">Execute</div>
+    <div class="sec-desc">Run dedup, transform, and compile</div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <button class="run-btn" id="runBtn" onclick="runTransform()">
+      <span id="runIcon">▶</span>
+      <span id="runLabel">BUILD TRANSFORMED FILE</span>
+    </button>
+    <div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:6px;letter-spacing:.1em;text-transform:uppercase">System Log</div>
+      <div class="log-panel" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 05 STATS ══ -->
+<div id="statsSection" style="display:none">
+  <div class="sec-head" style="margin-bottom:10px">
+    <div class="sec-num">05</div>
+    <div class="sec-title">Transform Summary</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat teal"><div class="stat-lbl">Input Rows</div><div class="stat-val" id="stat-input">—</div><div class="stat-sub">from dummy list</div></div>
+    <div class="stat red"> <div class="stat-lbl">Dupes Removed</div><div class="stat-val" id="stat-dupes">—</div><div class="stat-sub">internal + SQL</div></div>
+    <div class="stat green"><div class="stat-lbl">Clean Output Rows</div><div class="stat-val" id="stat-output">—</div><div class="stat-sub">unique records</div></div>
+    <div class="stat amber"><div class="stat-lbl">Output Files</div><div class="stat-val" id="stat-files">—</div><div class="stat-sub">max 10,000 / file</div></div>
+  </div>
+</div>
+
+<!-- ══ 06 PREVIEW ══ -->
+<div id="previewSection" style="display:none">
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-num">06</div>
+      <div class="sec-title">Row Preview</div>
+      <div class="sec-desc">First 5 output rows</div>
+    </div>
+    <div class="prev-wrap">
+      <table class="prev-tbl">
+        <thead>
+          <tr>
+            <th>#</th><th>im_code</th><th>loc_type</th>
+            <th>im_loc</th><th>MRP_LCTYP</th><th>MRP_LCNO</th><th>IM_DESCR</th>
+          </tr>
+        </thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 07 DOWNLOAD ══ -->
+<div id="downloadSection" style="display:none">
+  <div class="sec">
+    <div class="sec-head">
+      <div class="sec-num">07</div>
+      <div class="sec-title">Download Files</div>
+      <div class="sec-desc">Styled with Aptos Narrow · 11pt · All borders</div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px">
+      <div class="batch-list" id="batchList"></div>
+      <div class="divider"></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="dl-all" id="dlAllBtn" onclick="downloadAll()">⬇ DOWNLOAD ALL</button>
+        <div class="note-strip" style="flex:1">
+          Excel formatting: <span>Aptos Narrow</span> font · <span>11pt</span> · <span>All Borders</span> on every cell ·
+          im_code ↔ IM_DESCR matched by key (not position)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ══ STATE ══
+let wb1=null,wb2=null,sqlMode='file',compiledBatches=[];
+
+// ══ MODE TOGGLE ══
+function setMode(m){
+  sqlMode=m;
+  document.getElementById('sqlFilePanel').style.display =m==='file'?'':'none';
+  document.getElementById('sqlPastePanel').style.display=m==='paste'?'':'none';
+  document.getElementById('modeFileBtn').classList.toggle('active',m==='file');
+  document.getElementById('modePasteBtn').classList.toggle('active',m==='paste');
+}
+
+// ══ PASTE PARSER ══
+function parsePastedCodes(raw){
+  return raw.split(/[\n\r\t,;]+/).map(s=>s.replace(/['"]/g,'').trim()).filter(Boolean);
+}
+function updatePasteCount(){
+  document.getElementById('pasteCountVal').textContent=parsePastedCodes(document.getElementById('pasteInput').value).length.toLocaleString();
+}
+
+// ══ FILE LOADERS ══
+function setupDZ(dzId,inputId,slot){
+  const dz=document.getElementById(dzId),inp=document.getElementById(inputId),st=document.getElementById(dzId+'-status');
+  inp.addEventListener('change',e=>loadFile(e.target.files[0],slot,dz,st));
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0],slot,dz,st)});
+}
+function loadFile(file,slot,dz,st){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext)){alert('Unsupported file type.');return}
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=ext==='csv'?XLSX.read(e.target.result,{type:'string'}):XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      if(slot===1)wb1=wb;else wb2=wb;
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      st.textContent=`✓ ${file.name}  (${rows.length.toLocaleString()} rows loaded)`;
+      dz.classList.add('loaded');
+    }catch(e){alert('Parse error: '+e.message)}
+  };
+  if(ext==='csv')r.readAsText(file);else r.readAsArrayBuffer(file);
+}
+setupDZ('dz1','file1',1);
+setupDZ('dz2','file2',2);
+
+// ══ UI HELPERS ══
+function updateLivePreview(){
+  const v=document.getElementById('locationInput').value;
+  const el=document.getElementById('livePreview');
+  if(v){document.getElementById('lvValue').textContent=v;el.style.display='';}else el.style.display='none';
+}
+function updateVersionHint(){
+  const h={biff8:'Legacy BIFF8 format. Required for ERP systems that only accept Excel 97–2003 .xls files.',xlsx:'Standard OOXML format. Compatible with Excel 2007 and later.',csv:'Plain text CSV. Formatting is not applied to CSV output.'};
+  document.getElementById('versionHint').textContent=h[document.getElementById('versionSelect').value];
+}
+
+// ══ LOGGING ══
+const logEl=document.getElementById('log');
+function log(msg,type='info'){
+  const ts=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  const l=document.createElement('span');
+  l.className='log-line '+type;
+  l.innerHTML=`<span class="log-ts">[${ts}]</span>${msg}`;
+  logEl.appendChild(l);logEl.scrollTop=logEl.scrollHeight;
+}
+function clearLog(){logEl.innerHTML=''}
+
+// ══ EXCEL STYLING ENGINE ══
+// Applies: Aptos Narrow font, size 11, all borders on every cell
+function styleWorksheet(ws,totalRows,totalCols){
+  const borderStyle={style:'thin',color:{rgb:'000000'}};
+  const allBorders={top:borderStyle,bottom:borderStyle,left:borderStyle,right:borderStyle};
+
+  // Build range addresses
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+
+  for(let R=range.s.r;R<=range.e.r;R++){
+    for(let C=range.s.c;C<=range.e.c;C++){
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(!ws[addr]) ws[addr]={v:'',t:'s'};
+      ws[addr].s={
+        font:{name:'Aptos Narrow',sz:11,bold:R===0},  // row 0 = header → bold
+        border:allBorders,
+        alignment:{vertical:'center',wrapText:false}
+      };
+    }
+  }
+
+  // Auto-width hint (SheetJS uses wch for character width)
+  const cols=[];
+  const headers=['im_code','loc_type','im_loc','MRP_LCTYP','MRP_LCNO','IM_DESCR'];
+  const widths=[20,10,12,12,12,50];
+  headers.forEach((_,i)=>cols.push({wch:widths[i]||20}));
+  ws['!cols']=cols;
+
+  return ws;
+}
+
+// Build a properly styled workbook from row array
+function buildStyledWB(rows){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(rows);
+  styleWorksheet(ws);
+  XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  return wb;
+}
+
+// ══ CORE TRANSFORM ══
+async function runTransform(){
+  clearLog();compiledBatches=[];
+  ['statsSection','previewSection','downloadSection'].forEach(id=>document.getElementById(id).style.display='none');
+
+  const matCol  =document.getElementById('keyColMat').value.trim();
+  const descCol =document.getElementById('keyColDesc').value.trim();
+  const locValue=document.getElementById('locationInput').value.trim();
+  const version =document.getElementById('versionSelect').value;
+  const outName =document.getElementById('outFilename').value.trim()||'transformed_output';
+
+  if(!wb1){log('ERROR: Dummy List not loaded.','error');return}
+  if(sqlMode==='file'&&!wb2){log('ERROR: SQL Dump file not loaded.','error');return}
+  if(sqlMode==='paste'&&!document.getElementById('pasteInput').value.trim()){log('ERROR: Paste area is empty.','error');return}
+  if(!locValue){log('ERROR: Location Code is empty.','error');return}
+
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;
+  document.getElementById('runIcon').innerHTML='<span class="spinner"></span>';
+  document.getElementById('runLabel').textContent='BUILDING…';
+
+  await new Promise(r=>setTimeout(r,20));
+
+  try{
+    log('Initializing schema transform engine…','head');
+
+    // ── Build SQL Set ──
+    const sqlSet=new Set();
+    if(sqlMode==='file'){
+      log(`Parsing SQL Dump (sheet: "${wb2.SheetNames[0]}")…`,'info');
+      const sqlRows=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{defval:''});
+      log(`SQL Dump: ${sqlRows.length.toLocaleString()} records`,'ok');
+      for(const r of sqlRows){const c=String(r[matCol]??'').trim();if(c)sqlSet.add(c)}
+    }else{
+      log('Parsing pasted SQL codes…','info');
+      const codes=parsePastedCodes(document.getElementById('pasteInput').value);
+      for(const c of codes)sqlSet.add(c);
+      log(`Pasted codes: ${codes.length.toLocaleString()} entries → ${sqlSet.size.toLocaleString()} unique`,'ok');
+    }
+    log(`SQL index: ${sqlSet.size.toLocaleString()} unique codes`,'ok');
+
+    // ── Parse Dummy List ──
+    log(`Parsing Dummy List (sheet: "${wb1.SheetNames[0]}")…`,'info');
+    const dummyRows=XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]],{defval:''});
+    const inputCount=dummyRows.length;
+    log(`Dummy List: ${inputCount.toLocaleString()} rows`,'ok');
+
+    if(inputCount===0)throw new Error('Dummy List is empty.');
+    if(!Object.prototype.hasOwnProperty.call(dummyRows[0],matCol))
+      throw new Error(`Column "${matCol}" not found in Dummy List. Check header name.`);
+
+    // ── Build code→description Map (first occurrence wins) ──
+    // This guarantees im_code and IM_DESCR are always correctly paired by key, not by position.
+    log('Building im_code → IM_DESCR lookup map…','info');
+    const descMap=new Map();
+    for(const row of dummyRows){
+      const code=String(row[matCol]??'').trim();
+      if(code&&!descMap.has(code)){
+        descMap.set(code,String(row[descCol]??'').trim());
+      }
+    }
+    log(`Description map built — ${descMap.size.toLocaleString()} entries`,'ok');
+
+    // ── Deduplication ──
+    log('Running deduplication (internal + SQL cross-reference)…','info');
+    const seen=new Set();
+    const cleanCodes=[];
+    for(const row of dummyRows){
+      const code=String(row[matCol]??'').trim();
+      if(!code||seen.has(code)||sqlSet.has(code))continue;
+      seen.add(code);
+      cleanCodes.push(code);
+    }
+    const dupesRemoved=inputCount-cleanCodes.length;
+    log(`Duplicates removed: ${dupesRemoved.toLocaleString()}`,dupesRemoved>0?'warn':'ok');
+    log(`Clean unique records: ${cleanCodes.length.toLocaleString()}`,'ok');
+
+    if(cleanCodes.length===0){
+      log('All records were duplicates — nothing to export.','warn');
+      updateStats(inputCount,dupesRemoved,0,0);return;
+    }
+
+    // ── Schema Transform — im_code matched to IM_DESCR via Map ──
+    log('Transforming schema → 6-column layout with keyed description matching…','info');
+    const outputRows=cleanCodes.map(code=>({
+      im_code:   code,
+      loc_type:  'W',
+      im_loc:    locValue,
+      MRP_LCTYP: 'W',
+      MRP_LCNO:  'USTOR',
+      IM_DESCR:  descMap.get(code)||'',
+    }));
+    log(`Schema mapped — 6 cols × ${outputRows.length.toLocaleString()} rows`,'ok');
+
+    // ── Split + style ──
+    const LIMIT=10000;
+    const extMap={biff8:'.xls',xlsx:'.xlsx',csv:'.csv'};
+    const ext=extMap[version]||'.xlsx';
+    const chunks=outputRows.length<=LIMIT
+      ?[{rows:outputRows,filename:outName+ext}]
+      :[
+        {rows:outputRows.slice(0,LIMIT),  filename:outName+'_Part1'+ext},
+        {rows:outputRows.slice(LIMIT),    filename:outName+'_Part2'+ext},
+      ];
+
+    if(chunks.length>1)log(`Output exceeds 10,000 rows — splitting into 2 files`,'warn');
+
+    log('Applying Excel formatting (Aptos Narrow · 11pt · All Borders)…','info');
+    for(const chunk of chunks){
+      const wb=version==='csv'
+        ?buildWBNoStyle(chunk.rows)   // CSV: no style
+        :buildStyledWB(chunk.rows);   // XLS/XLSX: full style
+      compiledBatches.push({filename:chunk.filename,wb,rows:chunk.rows});
+      log(`Compiled: ${chunk.filename}  (${chunk.rows.length.toLocaleString()} rows)`,'ok');
+    }
+
+    updateStats(inputCount,dupesRemoved,outputRows.length,compiledBatches.length);
+    renderPreview(outputRows.slice(0,5));
+    renderBatches(version);
+
+    log('─────────────────────────────────────────','info');
+    log(`✓ Done. ${compiledBatches.length} file(s) ready for download.`,'ok');
+
+  }catch(err){
+    log(`FATAL: ${err.message}`,'error');
+  }finally{
+    btn.disabled=false;
+    document.getElementById('runIcon').textContent='▶';
+    document.getElementById('runLabel').textContent='BUILD TRANSFORMED FILE';
+  }
+}
+
+function buildWBNoStyle(rows){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Sheet1');
+  return wb;
+}
+
+// ══ STATS ══
+function updateStats(input,dupes,output,files){
+  document.getElementById('stat-input').textContent =input.toLocaleString();
+  document.getElementById('stat-dupes').textContent =dupes.toLocaleString();
+  document.getElementById('stat-output').textContent=output.toLocaleString();
+  document.getElementById('stat-files').textContent =files.toLocaleString();
+  document.getElementById('statsSection').style.display='';
+}
+
+// ══ PREVIEW ══
+function renderPreview(rows){
+  const body=document.getElementById('previewBody');body.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="row-n">${i+1}</td>
+      <td class="v">${esc(r.im_code)}</td>
+      <td class="c">W</td>
+      <td class="d">${esc(r.im_loc)}</td>
+      <td class="c">W</td>
+      <td class="c">USTOR</td>
+      <td class="v">${esc(r.IM_DESCR)}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById('previewSection').style.display='';
+}
+
+// ══ BATCH CARDS ══
+function renderBatches(version){
+  const list=document.getElementById('batchList');list.innerHTML='';
+  const fmtLabel={biff8:'BIFF8',xlsx:'XLSX',csv:'CSV'};
+  compiledBatches.forEach((b,i)=>{
+    const item=document.createElement('div');
+    item.className='batch-item';
+    item.style.animationDelay=(i*0.08)+'s';
+    item.innerHTML=`
+      <div class="b-idx">${i+1}</div>
+      <div class="b-name">${esc(b.filename)}</div>
+      <div class="b-meta">
+        <span>${b.rows.length.toLocaleString()}</span> rows &nbsp;·&nbsp;
+        6 columns
+        <span class="fmtbadge">${fmtLabel[version]||version}</span>
+      </div>
+      <button class="dl-btn" onclick="downloadBatch(${i})">⬇ DOWNLOAD</button>`;
+    list.appendChild(item);
+  });
+  document.getElementById('downloadSection').style.display='';
+  setTimeout(()=>document.getElementById('downloadSection').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ══ DOWNLOADS ══
+function downloadBatch(i){
+  const b=compiledBatches[i];if(!b)return;
+  const v=document.getElementById('versionSelect').value;
+  const t={biff8:'biff8',xlsx:'xlsx',csv:'csv'};
+  XLSX.writeFile(b.wb,b.filename,{bookType:t[v]||'xlsx',cellStyles:true});
+  log(`Downloaded: ${b.filename}`,'ok');
+}
+function downloadAll(){
+  if(!compiledBatches.length)return;
+  compiledBatches.forEach((b,i)=>setTimeout(()=>downloadBatch(i),i*300));
+}
+
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+</script>
+</body>
+</html>
