@@ -1,110 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ERP Transformer</title>
+<title>MCT Tool</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#080909;
-  --surface:#0e1011;
-  --card:#121415;
-  --card2:#0b0c0d;
-  --border:#1e2022;
-  --border2:#262a2c;
-  --border3:#2e3336;
-  --teal:#00e5c8;
-  --teal2:#00b8a2;
-  --teal-bg:rgba(0,229,200,.06);
-  --amber:#ffb638;
-  --amber-bg:rgba(255,182,56,.06);
-  --green:#30d97a;
-  --green-bg:rgba(48,217,122,.06);
-  --red:#ff5060;
-  --blue:#5599ff;
-  --violet:#a78bfa;
-  --text:#dde1e7;
-  --text2:#9aa3ad;
-  --text3:#555d66;
-  --head:'Syne',sans-serif;
-  --mono:'JetBrains Mono',monospace;
-}
-html{font-size:14px;scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
 
-/* ─── BACKGROUND GRID ─── */
-body::after{
+/* ════════════════════════════════
+   THEME TOKENS
+════════════════════════════════ */
+:root,[data-theme="dark"]{
+  --bg:        #080909;
+  --surface:   #0e1011;
+  --card:      #111314;
+  --card2:     #0b0c0d;
+  --border:    #1e2123;
+  --border2:   #262b2d;
+  --border3:   #2e3538;
+  --teal:      #00e5c8;
+  --teal2:     #00b8a2;
+  --teal-bg:   rgba(0,229,200,.07);
+  --teal-glow: rgba(0,229,200,.18);
+  --amber:     #ffb638;
+  --amber-bg:  rgba(255,182,56,.07);
+  --green:     #2ed673;
+  --green-bg:  rgba(46,214,115,.07);
+  --red:       #ff4f5e;
+  --blue:      #5599ff;
+  --text:      #dde1e7;
+  --text2:     #9aa3ae;
+  --text3:     #525c66;
+  --shadow:    0 4px 24px rgba(0,0,0,.5);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.35);
+}
+
+[data-theme="light"]{
+  --bg:        #f0f2f5;
+  --surface:   #e8eaed;
+  --card:      #ffffff;
+  --card2:     #f5f6f8;
+  --border:    #d8dce2;
+  --border2:   #c8cdd6;
+  --border3:   #b8bec9;
+  --teal:      #007d6f;
+  --teal2:     #005f55;
+  --teal-bg:   rgba(0,125,111,.07);
+  --teal-glow: rgba(0,125,111,.15);
+  --amber:     #c47a00;
+  --amber-bg:  rgba(196,122,0,.07);
+  --green:     #1a9e50;
+  --green-bg:  rgba(26,158,80,.07);
+  --red:       #d93040;
+  --blue:      #2a6ee0;
+  --text:      #1a1e24;
+  --text2:     #4a5260;
+  --text3:     #8a93a0;
+  --shadow:    0 4px 24px rgba(0,0,0,.1);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.07);
+}
+
+html{font-size:14px;scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  min-height:100vh;overflow-x:hidden;
+  transition:background .3s,color .3s;
+}
+
+/* grid bg — dark only */
+[data-theme="dark"] body::after{
   content:'';position:fixed;inset:0;
   background-image:
-    linear-gradient(rgba(0,229,200,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,200,.025) 1px,transparent 1px);
-  background-size:48px 48px;
+    linear-gradient(rgba(0,229,200,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,200,.022) 1px,transparent 1px);
+  background-size:52px 52px;
   pointer-events:none;z-index:0;
 }
+[data-theme="light"] body::after{display:none}
 
-/* ─── HEADER ─── */
+/* ════════════════════════════════
+   HEADER
+════════════════════════════════ */
 header{
   position:sticky;top:0;z-index:200;
-  background:rgba(8,9,9,.92);backdrop-filter:blur(20px);
+  height:62px;padding:0 28px;
+  display:flex;align-items:center;gap:18px;
   border-bottom:1px solid var(--border2);
-  padding:0 32px;height:60px;
-  display:flex;align-items:center;gap:20px;
+  transition:background .3s,border-color .3s;
 }
+[data-theme="dark"] header{background:rgba(8,9,9,.93);backdrop-filter:blur(20px)}
+[data-theme="light"] header{background:rgba(255,255,255,.96);backdrop-filter:blur(20px)}
+
 .logo-mark{
-  width:32px;height:32px;border-radius:6px;
-  background:linear-gradient(135deg,var(--teal),#006d62);
+  width:34px;height:34px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--teal),#005f55);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--head);font-weight:800;font-size:13px;color:#000;
-  letter-spacing:-.01em;flex-shrink:0;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#fff;
+  letter-spacing:-.01em;box-shadow:0 2px 12px var(--teal-glow);
 }
-.logo-text{font-family:var(--head);font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--text)}
-.logo-sub{font-size:10px;color:var(--text3);margin-top:1px;letter-spacing:.02em}
-.header-pills{margin-left:auto;display:flex;align-items:center;gap:8px}
+.logo-text{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--text);transition:color .3s}
+.logo-sub{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.04em;transition:color .3s}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+
 .hpill{
-  padding:4px 10px;border-radius:20px;border:1px solid var(--border2);
+  padding:4px 11px;border-radius:20px;border:1px solid var(--border2);
   font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--text3);
+  transition:all .3s;
 }
 .hpill.live{border-color:var(--green);color:var(--green);background:var(--green-bg)}
 
-/* ─── MAIN ─── */
+/* ── THEME TOGGLE ── */
+.theme-toggle{
+  display:flex;align-items:center;gap:0;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:8px;padding:3px;cursor:pointer;
+  transition:all .2s;
+}
+.theme-toggle:hover{border-color:var(--border3)}
+.tt-btn{
+  display:flex;align-items:center;justify-content:center;
+  width:30px;height:26px;border-radius:5px;border:none;
+  background:transparent;cursor:pointer;font-size:13px;
+  transition:all .15s;
+}
+.tt-btn.active{background:var(--teal);box-shadow:0 1px 8px var(--teal-glow)}
+.tt-btn:not(.active):hover{background:var(--teal-bg)}
+
+/* ════════════════════════════════
+   MAIN
+════════════════════════════════ */
 main{
   position:relative;z-index:1;
   max-width:1120px;margin:0 auto;
-  padding:36px 24px 80px;
-  display:flex;flex-direction:column;gap:24px;
+  padding:32px 22px 80px;
+  display:flex;flex-direction:column;gap:22px;
 }
 
-/* ─── SECTION HEADER ─── */
+/* ── SECTION ── */
 .sec{display:flex;flex-direction:column;gap:10px}
 .sec-head{
   display:flex;align-items:center;gap:12px;
   padding-bottom:10px;border-bottom:1px solid var(--border);
 }
 .sec-num{
-  width:22px;height:22px;border-radius:4px;
-  background:var(--teal-bg);border:1px solid rgba(0,229,200,.2);
+  width:22px;height:22px;border-radius:5px;
+  background:var(--teal-bg);border:1px solid rgba(0,229,200,.25);
   display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:700;color:var(--teal);letter-spacing:.05em;
+  font-size:9px;font-weight:700;color:var(--teal);letter-spacing:.04em;
 }
-.sec-title{font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--text2);text-transform:uppercase}
-.sec-desc{font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:.02em}
+[data-theme="light"] .sec-num{border-color:var(--teal);background:var(--teal-bg)}
+.sec-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--text2);text-transform:uppercase;transition:color .3s}
+.sec-desc{font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:.02em;transition:color .3s}
 
-/* ─── CARD ─── */
+/* ── CARD ── */
 .card{
   background:var(--card);border:1px solid var(--border2);
-  border-radius:8px;padding:20px 22px;
+  border-radius:10px;padding:20px 22px;
   position:relative;overflow:hidden;
+  box-shadow:var(--shadow-sm);
+  transition:background .3s,border-color .3s,box-shadow .3s;
 }
-.card::before{
-  content:'';position:absolute;inset:0;border-radius:8px;
-  background:linear-gradient(135deg,rgba(0,229,200,.025) 0%,transparent 60%);
+[data-theme="dark"] .card::before{
+  content:'';position:absolute;inset:0;border-radius:10px;
+  background:linear-gradient(135deg,rgba(0,229,200,.025) 0%,transparent 55%);
   pointer-events:none;
 }
 
-/* ─── FILE INPUT GRID ─── */
+/* ════════════════════════════════
+   FILE INPUTS
+════════════════════════════════ */
 .file-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:680px){.file-grid{grid-template-columns:1fr}}
 
@@ -113,266 +180,284 @@ main{
   color:var(--text3);text-transform:uppercase;margin-bottom:8px;
   display:flex;align-items:center;gap:8px;
 }
-.fsl-tag{
-  padding:2px 7px;border-radius:2px;font-size:8px;font-weight:700;
-  letter-spacing:.08em;
-}
-.fsl-tag.f1{background:rgba(0,229,200,.15);color:var(--teal)}
-.fsl-tag.f2{background:rgba(255,182,56,.15);color:var(--amber)}
+.fsl-tag{padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.08em}
+.fsl-tag.f1{background:var(--teal-bg);color:var(--teal);border:1px solid rgba(0,229,200,.2)}
+.fsl-tag.f2{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,182,56,.2)}
 
 .drop-zone{
-  border:1px dashed var(--border3);border-radius:6px;
-  padding:20px 16px;text-align:center;cursor:pointer;
+  border:1.5px dashed var(--border3);border-radius:8px;
+  padding:22px 16px;text-align:center;cursor:pointer;
   transition:all .2s;position:relative;background:var(--card2);
 }
-.drop-zone:hover,.drop-zone.dragover{
-  border-color:var(--teal);background:var(--teal-bg);
-}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--teal);background:var(--teal-bg);border-style:solid}
 .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.dz-icon{font-size:22px;margin-bottom:8px;display:block}
+.dz-icon{font-size:24px;margin-bottom:8px;display:block}
 .dz-title{font-size:11px;font-weight:600;color:var(--text);letter-spacing:.02em}
-.dz-sub{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.04em}
+.dz-sub{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
 .dz-status{
   margin-top:8px;font-size:9px;color:var(--green);word-break:break-all;
-  display:none;padding:5px 8px;background:var(--green-bg);
-  border-radius:3px;border:1px solid rgba(48,217,122,.2);
+  display:none;padding:5px 9px;background:var(--green-bg);
+  border-radius:4px;border:1px solid rgba(46,214,115,.25);
 }
 .drop-zone.loaded .dz-status{display:block}
-.drop-zone.loaded{border-color:var(--green);border-style:solid;background:var(--green-bg)}
+.drop-zone.loaded{border-color:var(--green);border-style:solid}
+[data-theme="light"] .drop-zone.loaded{background:var(--green-bg)}
 
-/* ─── MODE TOGGLE ─── */
+/* ════════════════════════════════
+   MODE TOGGLE
+════════════════════════════════ */
 .mode-wrap{display:flex;flex-direction:column;gap:10px}
 .mode-toggle{
   display:inline-flex;background:var(--card2);
-  border:1px solid var(--border2);border-radius:6px;padding:3px;gap:2px;
+  border:1px solid var(--border2);border-radius:7px;padding:3px;gap:2px;
   align-self:flex-start;
 }
 .mode-btn{
-  padding:5px 13px;border-radius:4px;border:none;cursor:pointer;
-  font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;
+  padding:5px 14px;border-radius:5px;border:none;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.05em;
   transition:all .15s;background:transparent;color:var(--text3);
 }
-.mode-btn.active{background:var(--teal);color:#000;box-shadow:0 1px 8px rgba(0,229,200,.3)}
+.mode-btn.active{background:var(--teal);color:#000;box-shadow:0 1px 10px var(--teal-glow)}
 .mode-btn:not(.active):hover{color:var(--teal);background:var(--teal-bg)}
 
-/* ─── PASTE AREA ─── */
+/* ── PASTE AREA ── */
 .paste-area{
   width:100%;min-height:130px;max-height:240px;
   background:var(--card2);border:1px solid var(--border2);
-  color:var(--text);font-family:var(--mono);font-size:10px;
-  padding:12px 14px;border-radius:6px;resize:vertical;
-  transition:border-color .15s;line-height:1.8;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;
+  padding:12px 14px;border-radius:7px;resize:vertical;
+  transition:border-color .15s,background .3s,color .3s;line-height:1.9;
 }
-.paste-area:focus{outline:none;border-color:var(--teal)}
+.paste-area:focus{outline:none;border-color:var(--teal);background:var(--teal-bg)}
 .paste-area::placeholder{color:var(--text3)}
-.paste-counter{
-  display:flex;align-items:center;gap:8px;
-  margin-top:6px;font-size:10px;color:var(--text3);
-}
+.paste-counter{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10px;color:var(--text3)}
 .paste-counter .cnt{
-  color:var(--teal);font-weight:600;
-  padding:2px 8px;background:var(--teal-bg);border-radius:3px;
+  color:var(--teal);font-weight:700;
+  padding:2px 9px;background:var(--teal-bg);border-radius:4px;
+  border:1px solid rgba(0,229,200,.2);
 }
 
-/* ─── SCHEMA TABLE ─── */
-.schema-wrap{overflow:hidden;border-radius:8px;border:1px solid var(--border2)}
+/* ════════════════════════════════
+   SCHEMA TABLE
+════════════════════════════════ */
+.schema-wrap{overflow:hidden;border-radius:10px;border:1px solid var(--border2);box-shadow:var(--shadow-sm);transition:box-shadow .3s}
 .schema-tbl{width:100%;border-collapse:collapse;font-size:11px}
 .schema-tbl thead{background:var(--card2)}
 .schema-tbl th{
-  padding:8px 14px;text-align:left;font-size:8px;font-weight:700;
-  letter-spacing:.12em;color:var(--text3);text-transform:uppercase;
+  padding:9px 16px;text-align:left;font-size:8px;font-weight:700;
+  letter-spacing:.14em;color:var(--text3);text-transform:uppercase;
   border-bottom:1px solid var(--border2);
 }
-.schema-tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.schema-tbl td{padding:11px 16px;border-bottom:1px solid var(--border);vertical-align:middle;transition:background .15s}
 .schema-tbl tr:last-child td{border-bottom:none}
-.schema-tbl tr:hover td{background:rgba(255,255,255,.01)}
-.col-name{font-family:var(--head);font-size:12px;font-weight:700;color:var(--teal)}
+.schema-tbl tr:hover td{background:var(--teal-bg)}
+.col-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--teal)}
 .badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:2px 8px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.1em;
+  display:inline-flex;align-items:center;
+  padding:2px 9px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:.1em;
 }
-.b-const  {background:rgba(85,153,255,.12);color:var(--blue);border:1px solid rgba(85,153,255,.2)}
-.b-dynamic{background:rgba(255,182,56,.12); color:var(--amber);border:1px solid rgba(255,182,56,.2)}
-.b-mapped {background:rgba(48,217,122,.12); color:var(--green);border:1px solid rgba(48,217,122,.2)}
-.b-deduped{background:rgba(0,229,200,.12);  color:var(--teal);border:1px solid rgba(0,229,200,.2)}
-.col-val{font-family:var(--mono);font-size:11px}
+.b-const  {background:rgba(85,153,255,.1);  color:var(--blue); border:1px solid rgba(85,153,255,.22)}
+.b-dynamic{background:var(--amber-bg);       color:var(--amber);border:1px solid rgba(255,182,56,.22)}
+.b-mapped {background:var(--green-bg);        color:var(--green);border:1px solid rgba(46,214,115,.22)}
+.b-deduped{background:var(--teal-bg);         color:var(--teal); border:1px solid rgba(0,229,200,.22)}
+.col-val{font-size:11px}
 .col-desc{font-size:10px;color:var(--text3)}
+.inl{background:var(--teal-bg);padding:1px 6px;border-radius:3px;font-size:10px;font-family:'JetBrains Mono',monospace}
+.inl-b{background:rgba(85,153,255,.1);padding:1px 6px;border-radius:3px;font-size:10px;font-family:'JetBrains Mono',monospace}
+.inl-g{background:var(--green-bg);padding:1px 6px;border-radius:3px;font-size:10px;font-family:'JetBrains Mono',monospace}
 
-/* ─── CONFIG GRID ─── */
+/* ════════════════════════════════
+   CONFIGURATION
+════════════════════════════════ */
 .cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:680px){.cfg-grid{grid-template-columns:1fr}}
 .cfg-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:760px){.cfg-row{grid-template-columns:1fr 1fr}}
-.field{display:flex;flex-direction:column;gap:6px}
+
+.field{display:flex;flex-direction:column;gap:7px}
 .field-lbl{
-  font-size:9px;font-weight:600;letter-spacing:.12em;
+  font-size:9px;font-weight:700;letter-spacing:.12em;
   color:var(--text3);text-transform:uppercase;
   display:flex;align-items:center;gap:6px;
 }
-.field-lbl .arrow{color:var(--teal);font-size:8px}
+.arrow{color:var(--teal);font-size:9px}
 .field-input{
   background:var(--card2);border:1px solid var(--border2);color:var(--text);
-  font-family:var(--mono);font-size:12px;font-weight:500;
-  padding:9px 12px;border-radius:5px;transition:all .15s;
-  letter-spacing:.03em;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+  padding:9px 13px;border-radius:6px;
+  transition:border-color .15s,background .15s,color .3s;
 }
 .field-input:focus{outline:none;border-color:var(--teal);background:var(--teal-bg)}
 .field-input::placeholder{color:var(--text3);font-weight:400}
 .field-input.lg{font-size:14px;font-weight:600;padding:11px 14px}
-.field-hint{font-size:9px;color:var(--text3);line-height:1.6}
-.field-hint code{color:var(--teal);background:var(--teal-bg);padding:1px 4px;border-radius:2px}
+.field-hint{font-size:9px;color:var(--text3);line-height:1.65}
+.field-hint code{color:var(--teal);background:var(--teal-bg);padding:1px 5px;border-radius:2px;font-size:9px}
 .field-select{
   background:var(--card2);border:1px solid var(--border2);color:var(--text);
-  font-family:var(--mono);font-size:11px;padding:9px 12px;border-radius:5px;
-  cursor:pointer;transition:all .15s;appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath fill='%23555d66' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:9px 13px;border-radius:6px;cursor:pointer;
+  transition:border-color .15s,background .3s,color .3s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;
 }
 .field-select:focus{outline:none;border-color:var(--teal)}
-.field-select option{background:#0e1011}
+.field-select option{background:var(--card)}
 .live-badge{
   display:inline-flex;align-items:center;gap:6px;
-  padding:5px 10px;border-radius:4px;
-  background:var(--amber-bg);border:1px solid rgba(255,182,56,.2);
-  font-size:10px;color:var(--amber);margin-top:2px;
+  padding:5px 11px;border-radius:5px;
+  background:var(--amber-bg);border:1px solid rgba(255,182,56,.22);
+  font-size:10px;color:var(--amber);
 }
 .live-badge .lbl{color:var(--text3)}
+.cfg-divider{height:1px;background:var(--border);margin:2px 0}
 
-/* ─── RUN BUTTON ─── */
+/* ════════════════════════════════
+   RUN BUTTON
+════════════════════════════════ */
 .run-btn{
   position:relative;overflow:hidden;
   background:linear-gradient(135deg,var(--teal),var(--teal2));
-  color:#000;border:none;padding:13px 30px;
-  font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.1em;
-  border-radius:6px;cursor:pointer;
+  color:#000;border:none;padding:13px 32px;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;
+  border-radius:7px;cursor:pointer;
   transition:all .2s;
   display:flex;align-items:center;gap:10px;align-self:flex-start;
-  box-shadow:0 4px 20px rgba(0,229,200,.2);
+  box-shadow:0 4px 20px var(--teal-glow);
 }
 .run-btn::after{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
-  opacity:0;transition:opacity .2s;
+  background:linear-gradient(135deg,rgba(255,255,255,.18),transparent);
+  opacity:0;transition:opacity .2s;pointer-events:none;
 }
+.run-btn:hover{transform:translateY(-1px);box-shadow:0 7px 28px var(--teal-glow)}
 .run-btn:hover::after{opacity:1}
-.run-btn:hover{box-shadow:0 6px 28px rgba(0,229,200,.35);transform:translateY(-1px)}
-.run-btn:active{transform:translateY(0);box-shadow:none}
-.run-btn:disabled{background:#1e2022;color:#3a4048;cursor:not-allowed;box-shadow:none;transform:none}
+.run-btn:active{transform:translateY(0);box-shadow:0 2px 10px var(--teal-glow)}
+.run-btn:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;transform:none;box-shadow:none}
 
-/* ─── LOG ─── */
+/* ════════════════════════════════
+   LOG
+════════════════════════════════ */
 .log-panel{
-  background:var(--card2);border:1px solid var(--border);border-radius:6px;
-  padding:12px 16px;font-size:10px;line-height:1.9;
+  background:var(--card2);border:1px solid var(--border);border-radius:7px;
+  padding:12px 16px;font-size:10px;line-height:1.95;
   min-height:56px;max-height:180px;overflow-y:auto;
+  transition:background .3s,border-color .3s;
 }
 .log-panel:empty::before{content:'// Awaiting execution…';color:var(--text3)}
 .log-line{display:block}
 .log-line.info {color:var(--text3)}
 .log-line.ok   {color:var(--green)}
 .log-line.warn {color:var(--amber)}
-.log-line.error{color:var(--red)}
+.log-line.error{color:var(--red);font-weight:600}
 .log-line.head {color:var(--blue);font-weight:600}
-.log-ts{color:#2a2e32;margin-right:8px;user-select:none}
+.log-ts{color:var(--border3);margin-right:8px;user-select:none}
 
-/* ─── STATS GRID ─── */
+/* ════════════════════════════════
+   STATS
+════════════════════════════════ */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media(max-width:720px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
 .stat{
-  background:var(--card2);border:1px solid var(--border2);
-  border-radius:7px;padding:16px 18px;position:relative;overflow:hidden;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:9px;padding:16px 18px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--shadow-sm);transition:all .3s;
 }
 .stat::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:7px 7px 0 0;
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:2.5px;border-radius:9px 9px 0 0;
 }
-.stat.teal::before{background:var(--teal)}
-.stat.red::before{background:var(--red)}
-.stat.green::before{background:var(--green)}
-.stat.amber::before{background:var(--amber)}
+.stat.teal ::before{background:linear-gradient(90deg,var(--teal),transparent)}
+.stat.red  ::before{background:linear-gradient(90deg,var(--red),transparent)}
+.stat.green::before{background:linear-gradient(90deg,var(--green),transparent)}
+.stat.amber::before{background:linear-gradient(90deg,var(--amber),transparent)}
 .stat-lbl{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
-.stat-val{font-family:var(--head);font-size:26px;font-weight:800;line-height:1}
+.stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1}
 .stat.teal  .stat-val{color:var(--teal)}
 .stat.red   .stat-val{color:var(--red)}
 .stat.green .stat-val{color:var(--green)}
 .stat.amber .stat-val{color:var(--amber)}
 .stat-sub{font-size:9px;color:var(--text3);margin-top:5px}
 
-/* ─── PREVIEW TABLE ─── */
-.prev-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border2)}
+/* ════════════════════════════════
+   PREVIEW TABLE
+════════════════════════════════ */
+.prev-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border2);box-shadow:var(--shadow-sm)}
 .prev-tbl{width:100%;border-collapse:collapse;font-size:10px;min-width:600px}
 .prev-tbl thead{background:var(--card2)}
 .prev-tbl th{
-  padding:9px 14px;text-align:left;font-size:9px;
-  font-weight:700;letter-spacing:.1em;color:var(--teal);
-  border-bottom:1px solid var(--border2);white-space:nowrap;
-  text-transform:uppercase;
+  padding:9px 15px;text-align:left;font-size:8px;
+  font-weight:700;letter-spacing:.12em;color:var(--teal);
+  border-bottom:1px solid var(--border2);text-transform:uppercase;white-space:nowrap;
 }
-.prev-tbl td{padding:8px 14px;border-bottom:1px solid var(--border);white-space:nowrap;font-size:10px}
+.prev-tbl td{padding:8px 15px;border-bottom:1px solid var(--border);white-space:nowrap;transition:background .15s}
+.prev-tbl tr:hover td{background:var(--teal-bg)}
 .prev-tbl tr:last-child td{border-bottom:none}
-.prev-tbl tr:hover td{background:rgba(0,229,200,.02)}
 .prev-tbl td.v{color:var(--text)}
 .prev-tbl td.c{color:var(--blue)}
 .prev-tbl td.d{color:var(--amber)}
 .prev-tbl .row-n{color:var(--text3);font-size:9px}
 
-/* ─── BATCH DOWNLOAD ─── */
+/* ════════════════════════════════
+   DOWNLOAD BATCH ITEMS
+════════════════════════════════ */
 .batch-list{display:flex;flex-direction:column;gap:10px}
 .batch-item{
   display:flex;align-items:center;gap:16px;
   background:var(--card2);border:1px solid var(--border2);
-  border-radius:7px;padding:16px 20px;
+  border-radius:9px;padding:16px 20px;
   animation:slideUp .25s ease both;
-  transition:border-color .15s;
+  transition:border-color .15s,box-shadow .15s;
 }
-.batch-item:hover{border-color:var(--border3)}
+.batch-item:hover{border-color:var(--teal);box-shadow:0 2px 16px var(--teal-glow)}
 @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .b-idx{
-  width:28px;height:28px;border-radius:50%;
-  background:var(--amber-bg);border:1px solid rgba(255,182,56,.2);
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:var(--amber-bg);border:1px solid rgba(255,182,56,.25);
   display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;color:var(--amber);flex-shrink:0;
+  font-size:11px;font-weight:700;color:var(--amber);
 }
-.b-name{font-family:var(--head);font-size:14px;font-weight:700;color:var(--amber);min-width:220px}
+.b-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--amber);min-width:220px}
 .b-meta{flex:1;font-size:10px;color:var(--text3);line-height:1.8}
 .b-meta span{color:var(--text)}
-.b-meta .fmtbadge{
-  display:inline-block;padding:1px 7px;border-radius:2px;font-size:8px;font-weight:700;
-  background:var(--teal-bg);color:var(--teal);border:1px solid rgba(0,229,200,.15);
-  letter-spacing:.06em;margin-left:6px;
+.fmtbadge{
+  display:inline-block;padding:1px 7px;border-radius:3px;font-size:8px;font-weight:700;
+  background:var(--teal-bg);color:var(--teal);border:1px solid rgba(0,229,200,.2);
+  letter-spacing:.07em;margin-left:6px;
 }
 .dl-btn{
-  display:flex;align-items:center;gap:7px;
-  background:transparent;border:1px solid var(--teal);color:var(--teal);
-  padding:9px 20px;font-family:var(--mono);font-size:10px;font-weight:600;
-  letter-spacing:.08em;border-radius:5px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+  background:transparent;border:1.5px solid var(--teal);color:var(--teal);
+  padding:9px 20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.08em;border-radius:6px;cursor:pointer;
   transition:all .15s;white-space:nowrap;
 }
-.dl-btn:hover{background:var(--teal);color:#000;box-shadow:0 2px 12px rgba(0,229,200,.25)}
-.dl-all{
+.dl-btn:hover{background:var(--teal);color:#000;box-shadow:0 2px 14px var(--teal-glow)}
+.dl-all-btn{
   display:flex;align-items:center;gap:8px;
   background:transparent;border:1px solid var(--border3);color:var(--text2);
-  padding:8px 18px;font-family:var(--mono);font-size:10px;font-weight:600;
-  letter-spacing:.06em;border-radius:5px;cursor:pointer;
+  padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:.06em;border-radius:6px;cursor:pointer;
   transition:all .15s;align-self:flex-start;
 }
-.dl-all:hover{border-color:var(--text2);color:var(--text)}
+.dl-all-btn:hover{border-color:var(--text2);color:var(--text)}
 .note-strip{
-  font-size:9px;color:var(--text3);line-height:1.8;
-  padding:10px 14px;background:var(--card2);border-radius:5px;
-  border:1px solid var(--border);
+  flex:1;font-size:9px;color:var(--text3);line-height:1.85;
+  padding:10px 14px;background:var(--card2);border-radius:6px;
+  border:1px solid var(--border);transition:all .3s;
 }
 .note-strip span{color:var(--teal)}
 
-/* ─── DIVIDER ─── */
+/* ════════════════════════════════
+   MISC
+════════════════════════════════ */
 .divider{height:1px;background:var(--border);margin:4px 0}
-
-/* ─── SPINNER ─── */
 .spinner{
   display:inline-block;width:11px;height:11px;
-  border:2px solid rgba(0,229,200,.2);border-top-color:var(--teal);
+  border:2px solid rgba(0,0,0,.15);border-top-color:#000;
   border-radius:50%;animation:spin .6s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
@@ -380,16 +465,22 @@ main{
 </head>
 <body>
 
+<!-- ════════ HEADER ════════ -->
 <header>
   <div class="logo-mark">HK</div>
   <div>
-    <div class="logo-text">ERP Material Code Transformer</div>
+    <div class="logo-text">Material Code Transformer</div>
     <div class="logo-sub">Dedup · Remap · Format · Export</div>
   </div>
-  <div class="header-pills">
+  <div class="header-right">
     <div class="hpill live">● Harshal Khadatare</div>
-    <div class="hpill ">Data Transformer Tool</div>
-    <div class="hpill live">v5.0.1</div>
+    <div class="hpill">DATA TRANSFORMER TOOL</div>
+    <div class="hpill">v5.0.1</div>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" title="Switch theme">
+      <button class="tt-btn" id="btnDark"  onclick="setTheme('dark')"  title="Dark mode">🌙</button>
+      <button class="tt-btn" id="btnLight" onclick="setTheme('light')" title="Light mode">☀️</button>
+    </div>
   </div>
 </header>
 
@@ -400,38 +491,38 @@ main{
   <div class="sec-head">
     <div class="sec-num">01</div>
     <div class="sec-title">File Inputs</div>
-    <div class="sec-desc">Upload source files for processing</div>
+    <div class="sec-desc">Upload source files · .xlsx .xls .csv accepted</div>
   </div>
   <div class="card">
     <div class="file-grid">
 
-      <!-- Dummy List -->
+      <!-- FILE 1: Dummy List -->
       <div>
         <div class="file-slot-label">
           <span class="fsl-tag f1">FILE 1</span>
           Dummy List
-          <span style="color:var(--text3);font-weight:400">— new uncleaned batch</span>
+          <span style="color:var(--text3);font-weight:400;font-size:9px">— new uncleaned batch</span>
         </div>
         <div class="drop-zone" id="dz1">
           <input type="file" id="file1" accept=".xlsx,.xls,.csv"/>
           <span class="dz-icon">📋</span>
           <div class="dz-title">Drop file or click to browse</div>
-          <div class="dz-sub">ACCEPTS .XLSX · .XLS · .CSV</div>
+          <div class="dz-sub">.xlsx · .xls · .csv</div>
           <div class="dz-status" id="dz1-status"></div>
         </div>
       </div>
 
-      <!-- SQL / ERP Dump -->
+      <!-- FILE 2: SQL / ERP Dump with mode toggle -->
       <div>
         <div class="file-slot-label">
           <span class="fsl-tag f2">FILE 2</span>
           SQL / ERP Dump
-          <span style="color:var(--text3);font-weight:400">— existing records</span>
+          <span style="color:var(--text3);font-weight:400;font-size:9px">— existing records</span>
         </div>
         <div class="mode-wrap">
           <div class="mode-toggle">
-            <button class="mode-btn active" id="modeFileBtn" onclick="setMode('file')">📂 FILE UPLOAD</button>
-            <button class="mode-btn" id="modePasteBtn" onclick="setMode('paste')">📋 PASTE CODES</button>
+            <button class="mode-btn active" id="modeFileBtn"  onclick="setMode('file')">📂 FILE UPLOAD</button>
+            <button class="mode-btn"        id="modePasteBtn" onclick="setMode('paste')">📋 PASTE CODES</button>
           </div>
 
           <div id="sqlFilePanel">
@@ -439,18 +530,18 @@ main{
               <input type="file" id="file2" accept=".xlsx,.xls,.csv"/>
               <span class="dz-icon">🗄️</span>
               <div class="dz-title">Drop file or click to browse</div>
-              <div class="dz-sub">ACCEPTS .XLSX · .XLS · .CSV</div>
+              <div class="dz-sub">.xlsx · .xls · .csv</div>
               <div class="dz-status" id="dz2-status"></div>
             </div>
           </div>
 
           <div id="sqlPastePanel" style="display:none">
             <textarea class="paste-area" id="pasteInput"
-              placeholder="Paste im_code / Material Code values directly from SQL&#10;&#10;Accepted formats:&#10;  • One code per line&#10;  • Tab-separated (SQL grid copy)&#10;  • Comma or semicolon separated&#10;&#10;Example:&#10;MAT-00123&#10;MAT-00456&#10;MAT-00789"
+              placeholder="Paste im_code / Material Code values directly from SQL&#10;&#10;Accepted formats:&#10;  • One code per line&#10;  • Tab-separated  (SQL grid copy)&#10;  • Comma or semicolon separated&#10;&#10;Example:&#10;MAT-00123&#10;MAT-00456&#10;MAT-00789"
               oninput="updatePasteCount()"></textarea>
             <div class="paste-counter">
               Codes detected: <span class="cnt" id="pasteCountVal">0</span>
-              <span style="color:var(--text3);font-size:9px">— duplicates will be collapsed automatically</span>
+              <span style="font-size:9px">— duplicates collapsed automatically</span>
             </div>
           </div>
         </div>
@@ -460,7 +551,7 @@ main{
   </div>
 </div>
 
-<!-- ══ 02 OUTPUT SCHEMA ══ -->
+<!-- ══ 02 SCHEMA MAP ══ -->
 <div class="sec">
   <div class="sec-head">
     <div class="sec-num">02</div>
@@ -472,7 +563,7 @@ main{
       <thead>
         <tr>
           <th style="width:130px">Column</th>
-          <th style="width:100px">Type</th>
+          <th style="width:102px">Type</th>
           <th>Source / Value</th>
           <th>Notes</th>
         </tr>
@@ -481,13 +572,13 @@ main{
         <tr>
           <td><span class="col-name">im_code</span></td>
           <td><span class="badge b-deduped">DEDUPED</span></td>
-          <td class="col-val" style="color:var(--teal)">File 1 → <code style="background:var(--teal-bg);padding:1px 5px;border-radius:2px;font-size:10px">Material Code</code></td>
+          <td class="col-val" style="color:var(--teal)">File 1 → <code class="inl">Material Code</code></td>
           <td class="col-desc">Unique codes, cross-referenced against SQL source</td>
         </tr>
         <tr>
           <td><span class="col-name">loc_type</span></td>
           <td><span class="badge b-const">CONSTANT</span></td>
-          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"W"</code></td>
+          <td class="col-val" style="color:var(--blue)"><code class="inl-b">"W"</code></td>
           <td class="col-desc">Hardcoded for all rows</td>
         </tr>
         <tr>
@@ -499,19 +590,19 @@ main{
         <tr>
           <td><span class="col-name">MRP_LCTYP</span></td>
           <td><span class="badge b-const">CONSTANT</span></td>
-          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"W"</code></td>
+          <td class="col-val" style="color:var(--blue)"><code class="inl-b">"W"</code></td>
           <td class="col-desc">Hardcoded for all rows</td>
         </tr>
         <tr>
           <td><span class="col-name">MRP_LCNO</span></td>
           <td><span class="badge b-const">CONSTANT</span></td>
-          <td class="col-val" style="color:var(--blue)"><code style="background:rgba(85,153,255,.1);padding:1px 6px;border-radius:2px">"USTOR"</code></td>
+          <td class="col-val" style="color:var(--blue)"><code class="inl-b">"USTOR"</code></td>
           <td class="col-desc">Hardcoded for all rows</td>
         </tr>
         <tr>
           <td><span class="col-name">IM_DESCR</span></td>
           <td><span class="badge b-mapped">MAPPED</span></td>
-          <td class="col-val" style="color:var(--green)">File 1 → <code style="background:var(--green-bg);padding:1px 5px;border-radius:2px;font-size:10px">Description</code></td>
+          <td class="col-val" style="color:var(--green)">File 1 → <code class="inl-g">Description</code></td>
           <td class="col-desc">Paired by im_code key — exact match guaranteed</td>
         </tr>
       </tbody>
@@ -524,44 +615,53 @@ main{
   <div class="sec-head">
     <div class="sec-num">03</div>
     <div class="sec-title">Configuration</div>
-    <div class="sec-desc">Set location, format, and column mappings</div>
+    <div class="sec-desc">Location · Format · Column Mappings</div>
   </div>
   <div class="card" style="display:flex;flex-direction:column;gap:18px">
 
     <div class="cfg-grid">
+
+      <!-- Location Code -->
       <div class="field">
         <div class="field-lbl">Location Code <span class="arrow">→ im_loc</span></div>
         <input type="text" id="locationInput" class="field-input lg" placeholder="e.g. SC455" oninput="updateLivePreview()"/>
-        <div class="field-hint">Injected into <code>im_loc</code> for every output row.</div>
+        <div class="field-hint">Exact string injected into <code>im_loc</code> for every row.</div>
         <div id="livePreview" style="display:none">
           <div class="live-badge"><span class="lbl">im_loc →</span> <strong id="lvValue"></strong></div>
         </div>
       </div>
+
+      <!-- Version Select -->
       <div class="field">
         <div class="field-lbl">Output File Format <span class="arrow">→ version</span></div>
         <select id="versionSelect" class="field-select" onchange="updateVersionHint()">
-          <option value="biff8">Legacy XLS — Excel 5.0 / 97–2003  (.xls, BIFF8)</option>
-          <option value="xlsx" selected>Modern XLSX — Excel 2007+  (.xlsx, OOXML)</option>
+          <option value="xlsx" selected>Modern XLSX — Excel 2007+  (.xlsx)</option>
+          <option value="biff8">Legacy XLS — Excel 97–2003  (.xls, BIFF8)</option>
+          <option value="biff5">Legacy XLS — Excel 5.0/95  (.xls, BIFF5)</option>
           <option value="csv">CSV — Comma-Separated Values  (.csv)</option>
         </select>
-        <div class="field-hint" id="versionHint">Standard OOXML format. Compatible with Excel 2007 and later.</div>
+        <div class="field-hint" id="versionHint">Standard OOXML format. Compatible with Excel 2007 and later. Supports full cell styling.</div>
       </div>
+
     </div>
 
-    <div style="height:1px;background:var(--border)"></div>
+    <div class="cfg-divider"></div>
 
     <div class="cfg-row">
       <div class="field">
         <div class="field-lbl">Material Code Column</div>
-        <input type="text" id="keyColMat" class="field-input" value="Item Code"/>
+        <input type="text" id="keyColMat"  class="field-input" value="Item Code"/>
+        <div class="field-hint">Exact header name in File 1</div>
       </div>
       <div class="field">
         <div class="field-lbl">Description Column</div>
         <input type="text" id="keyColDesc" class="field-input" value="Item Description"/>
+        <div class="field-hint">Exact header name in File 1</div>
       </div>
       <div class="field">
         <div class="field-lbl">Output Filename</div>
-        <input type="text" id="outFilename" class="field-input" value="transformed_output"/>
+        <input type="text" id="outFilename" class="field-input" value="transformed_file"/>
+        <div class="field-hint">Extension appended automatically</div>
       </div>
     </div>
 
@@ -573,7 +673,7 @@ main{
   <div class="sec-head">
     <div class="sec-num">04</div>
     <div class="sec-title">Execute</div>
-    <div class="sec-desc">Run dedup, transform, and compile</div>
+    <div class="sec-desc">Dedup · Transform · Style · Compile</div>
   </div>
   <div class="card" style="display:flex;flex-direction:column;gap:14px">
     <button class="run-btn" id="runBtn" onclick="runTransform()">
@@ -581,7 +681,7 @@ main{
       <span id="runLabel">BUILD TRANSFORMED FILE</span>
     </button>
     <div>
-      <div style="font-size:9px;color:var(--text3);margin-bottom:6px;letter-spacing:.1em;text-transform:uppercase">System Log</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:7px;letter-spacing:.12em;text-transform:uppercase">System Log</div>
       <div class="log-panel" id="log"></div>
     </div>
   </div>
@@ -595,19 +695,19 @@ main{
   </div>
   <div class="stats-grid">
     <div class="stat teal"><div class="stat-lbl">Input Rows</div><div class="stat-val" id="stat-input">—</div><div class="stat-sub">from dummy list</div></div>
-    <div class="stat red"> <div class="stat-lbl">Dupes Removed</div><div class="stat-val" id="stat-dupes">—</div><div class="stat-sub">internal + SQL</div></div>
+    <div class="stat red" ><div class="stat-lbl">Dupes Removed</div><div class="stat-val" id="stat-dupes">—</div><div class="stat-sub">internal + SQL match</div></div>
     <div class="stat green"><div class="stat-lbl">Clean Output Rows</div><div class="stat-val" id="stat-output">—</div><div class="stat-sub">unique records</div></div>
     <div class="stat amber"><div class="stat-lbl">Output Files</div><div class="stat-val" id="stat-files">—</div><div class="stat-sub">max 10,000 / file</div></div>
   </div>
 </div>
 
-<!-- ══ 06 PREVIEW ══ -->
+<!-- ══ 06 ROW PREVIEW ══ -->
 <div id="previewSection" style="display:none">
   <div class="sec">
     <div class="sec-head">
       <div class="sec-num">06</div>
       <div class="sec-title">Row Preview</div>
-      <div class="sec-desc">First 5 output rows</div>
+      <div class="sec-desc">First 5 output rows — im_code keyed to IM_DESCR</div>
     </div>
     <div class="prev-wrap">
       <table class="prev-tbl">
@@ -629,16 +729,17 @@ main{
     <div class="sec-head">
       <div class="sec-num">07</div>
       <div class="sec-title">Download Files</div>
-      <div class="sec-desc">Styled with Aptos Narrow · 11pt · All borders</div>
+      <div class="sec-desc">Aptos Narrow · 11pt · All Borders · Key-matched IM_DESCR</div>
     </div>
     <div class="card" style="display:flex;flex-direction:column;gap:14px">
       <div class="batch-list" id="batchList"></div>
       <div class="divider"></div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <button class="dl-all" id="dlAllBtn" onclick="downloadAll()">⬇ DOWNLOAD ALL</button>
-        <div class="note-strip" style="flex:1">
-          Excel formatting: <span>Aptos Narrow</span> font · <span>11pt</span> · <span>All Borders</span> on every cell ·
-          im_code ↔ IM_DESCR matched by key (not position)
+        <button class="dl-all-btn" onclick="downloadAll()">⬇ DOWNLOAD ALL</button>
+        <div class="note-strip">
+          Excel output: <span>Aptos Narrow</span> font · <span>11pt</span> size ·
+          <span>All Borders</span> (thin, every cell) · Header row <span>bold</span> ·
+          im_code ↔ IM_DESCR matched by Map key (not row position)
         </div>
       </div>
     </div>
@@ -648,64 +749,104 @@ main{
 </main>
 
 <script>
-// ══ STATE ══
+/* ════════════════════════════════════════════════════
+   THEME
+════════════════════════════════════════════════════ */
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('btnDark').classList.toggle('active',t==='dark');
+  document.getElementById('btnLight').classList.toggle('active',t==='light');
+  localStorage.setItem('erpTheme',t);
+}
+(function(){
+  const saved=localStorage.getItem('erpTheme')||'dark';
+  setTheme(saved);
+})();
+
+/* ════════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════════ */
 let wb1=null,wb2=null,sqlMode='file',compiledBatches=[];
 
-// ══ MODE TOGGLE ══
+/* ════════════════════════════════════════════════════
+   MODE TOGGLE
+════════════════════════════════════════════════════ */
 function setMode(m){
   sqlMode=m;
-  document.getElementById('sqlFilePanel').style.display =m==='file'?'':'none';
+  document.getElementById('sqlFilePanel').style.display =m==='file' ?'':'none';
   document.getElementById('sqlPastePanel').style.display=m==='paste'?'':'none';
   document.getElementById('modeFileBtn').classList.toggle('active',m==='file');
   document.getElementById('modePasteBtn').classList.toggle('active',m==='paste');
 }
 
-// ══ PASTE PARSER ══
+/* ════════════════════════════════════════════════════
+   PASTE PARSER
+════════════════════════════════════════════════════ */
 function parsePastedCodes(raw){
   return raw.split(/[\n\r\t,;]+/).map(s=>s.replace(/['"]/g,'').trim()).filter(Boolean);
 }
 function updatePasteCount(){
-  document.getElementById('pasteCountVal').textContent=parsePastedCodes(document.getElementById('pasteInput').value).length.toLocaleString();
+  document.getElementById('pasteCountVal').textContent=
+    parsePastedCodes(document.getElementById('pasteInput').value).length.toLocaleString();
 }
 
-// ══ FILE LOADERS ══
+/* ════════════════════════════════════════════════════
+   FILE DROP ZONES
+════════════════════════════════════════════════════ */
 function setupDZ(dzId,inputId,slot){
-  const dz=document.getElementById(dzId),inp=document.getElementById(inputId),st=document.getElementById(dzId+'-status');
+  const dz=document.getElementById(dzId);
+  const inp=document.getElementById(inputId);
+  const st=document.getElementById(dzId+'-status');
   inp.addEventListener('change',e=>loadFile(e.target.files[0],slot,dz,st));
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover')});
   dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0],slot,dz,st)});
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('dragover');
+    if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0],slot,dz,st);
+  });
 }
 function loadFile(file,slot,dz,st){
   const ext=file.name.split('.').pop().toLowerCase();
-  if(!['xlsx','xls','csv'].includes(ext)){alert('Unsupported file type.');return}
+  if(!['xlsx','xls','csv'].includes(ext)){alert('Unsupported file type. Use .xlsx, .xls, or .csv');return}
   const r=new FileReader();
   r.onload=e=>{
     try{
-      const wb=ext==='csv'?XLSX.read(e.target.result,{type:'string'}):XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const wb=ext==='csv'
+        ?XLSX.read(e.target.result,{type:'string'})
+        :XLSX.read(new Uint8Array(e.target.result),{type:'array'});
       if(slot===1)wb1=wb;else wb2=wb;
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
       st.textContent=`✓ ${file.name}  (${rows.length.toLocaleString()} rows loaded)`;
       dz.classList.add('loaded');
-    }catch(e){alert('Parse error: '+e.message)}
+    }catch(err){alert('Parse error: '+err.message)}
   };
   if(ext==='csv')r.readAsText(file);else r.readAsArrayBuffer(file);
 }
 setupDZ('dz1','file1',1);
 setupDZ('dz2','file2',2);
 
-// ══ UI HELPERS ══
+/* ════════════════════════════════════════════════════
+   LIVE HELPERS
+════════════════════════════════════════════════════ */
 function updateLivePreview(){
   const v=document.getElementById('locationInput').value;
   const el=document.getElementById('livePreview');
-  if(v){document.getElementById('lvValue').textContent=v;el.style.display='';}else el.style.display='none';
+  if(v){document.getElementById('lvValue').textContent=v;el.style.display='';}
+  else el.style.display='none';
 }
 function updateVersionHint(){
-  const h={biff8:'Legacy BIFF8 format. Required for ERP systems that only accept Excel 97–2003 .xls files.',xlsx:'Standard OOXML format. Compatible with Excel 2007 and later.',csv:'Plain text CSV. Formatting is not applied to CSV output.'};
-  document.getElementById('versionHint').textContent=h[document.getElementById('versionSelect').value];
+  const hints={
+    xlsx:  'Standard OOXML format. Excel 2007+. Full cell styling supported.',
+    biff8: 'Legacy BIFF8 binary format (.xls). Excel 97–2003. Required for older ERP parsers. Full styling applied.',
+    biff5: 'Legacy BIFF5 binary format (.xls). Excel 5.0/95. Maximum legacy compatibility. Styling applied where supported.',
+    csv:   'Plain text CSV. No styling applied. Maximum raw compatibility.',
+  };
+  document.getElementById('versionHint').textContent=hints[document.getElementById('versionSelect').value]||'';
 }
 
-// ══ LOGGING ══
+/* ════════════════════════════════════════════════════
+   LOGGING
+════════════════════════════════════════════════════ */
 const logEl=document.getElementById('log');
 function log(msg,type='info'){
   const ts=new Date().toLocaleTimeString('en-GB',{hour12:false});
@@ -716,38 +857,38 @@ function log(msg,type='info'){
 }
 function clearLog(){logEl.innerHTML=''}
 
-// ══ EXCEL STYLING ENGINE ══
-// Applies: Aptos Narrow font, size 11, all borders on every cell
-function styleWorksheet(ws,totalRows,totalCols){
-  const borderStyle={style:'thin',color:{rgb:'000000'}};
-  const allBorders={top:borderStyle,bottom:borderStyle,left:borderStyle,right:borderStyle};
-
-  // Build range addresses
-  const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+/* ════════════════════════════════════════════════════
+   EXCEL STYLING ENGINE
+   — Aptos Narrow, 11pt, all-borders, bold header
+════════════════════════════════════════════════════ */
+function styleWorksheet(ws){
+  const thin={style:'thin',color:{rgb:'000000'}};
+  const borders={top:thin,bottom:thin,left:thin,right:thin};
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1:F1');
 
   for(let R=range.s.r;R<=range.e.r;R++){
     for(let C=range.s.c;C<=range.e.c;C++){
       const addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(!ws[addr]) ws[addr]={v:'',t:'s'};
+      if(!ws[addr]){ws[addr]={v:'',t:'s'}}
       ws[addr].s={
-        font:{name:'Aptos Narrow',sz:11,bold:R===0},  // row 0 = header → bold
-        border:allBorders,
-        alignment:{vertical:'center',wrapText:false}
+        font:{name:'Aptos Narrow',sz:11,bold:(R===0)},
+        border:borders,
+        alignment:{vertical:'center',wrapText:false},
       };
     }
   }
-
-  // Auto-width hint (SheetJS uses wch for character width)
-  const cols=[];
-  const headers=['im_code','loc_type','im_loc','MRP_LCTYP','MRP_LCNO','IM_DESCR'];
-  const widths=[20,10,12,12,12,50];
-  headers.forEach((_,i)=>cols.push({wch:widths[i]||20}));
-  ws['!cols']=cols;
-
+  // Column widths
+  ws['!cols']=[
+    {wch:22}, // im_code
+    {wch:10}, // loc_type
+    {wch:12}, // im_loc
+    {wch:11}, // MRP_LCTYP
+    {wch:11}, // MRP_LCNO
+    {wch:52}, // IM_DESCR
+  ];
   return ws;
 }
 
-// Build a properly styled workbook from row array
 function buildStyledWB(rows){
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.json_to_sheet(rows);
@@ -755,10 +896,18 @@ function buildStyledWB(rows){
   XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
   return wb;
 }
+function buildPlainWB(rows){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Sheet1');
+  return wb;
+}
 
-// ══ CORE TRANSFORM ══
+/* ════════════════════════════════════════════════════
+   CORE TRANSFORM
+════════════════════════════════════════════════════ */
 async function runTransform(){
-  clearLog();compiledBatches=[];
+  clearLog();
+  compiledBatches=[];
   ['statsSection','previewSection','downloadSection'].forEach(id=>document.getElementById(id).style.display='none');
 
   const matCol  =document.getElementById('keyColMat').value.trim();
@@ -767,48 +916,47 @@ async function runTransform(){
   const version =document.getElementById('versionSelect').value;
   const outName =document.getElementById('outFilename').value.trim()||'transformed_output';
 
+  // Validate
   if(!wb1){log('ERROR: Dummy List not loaded.','error');return}
-  if(sqlMode==='file'&&!wb2){log('ERROR: SQL Dump file not loaded.','error');return}
+  if(sqlMode==='file'&&!wb2){log('ERROR: SQL Dump file not loaded. Switch to PASTE CODES or upload a file.','error');return}
   if(sqlMode==='paste'&&!document.getElementById('pasteInput').value.trim()){log('ERROR: Paste area is empty.','error');return}
-  if(!locValue){log('ERROR: Location Code is empty.','error');return}
+  if(!locValue){log('ERROR: Location Code is empty. Fill in the im_loc field.','error');return}
 
   const btn=document.getElementById('runBtn');
   btn.disabled=true;
   document.getElementById('runIcon').innerHTML='<span class="spinner"></span>';
   document.getElementById('runLabel').textContent='BUILDING…';
-
-  await new Promise(r=>setTimeout(r,20));
+  await new Promise(r=>setTimeout(r,25));
 
   try{
     log('Initializing schema transform engine…','head');
 
-    // ── Build SQL Set ──
+    /* ── Build SQL Set ── */
     const sqlSet=new Set();
     if(sqlMode==='file'){
       log(`Parsing SQL Dump (sheet: "${wb2.SheetNames[0]}")…`,'info');
       const sqlRows=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{defval:''});
-      log(`SQL Dump: ${sqlRows.length.toLocaleString()} records`,'ok');
+      log(`SQL Dump: ${sqlRows.length.toLocaleString()} records found`,'ok');
       for(const r of sqlRows){const c=String(r[matCol]??'').trim();if(c)sqlSet.add(c)}
     }else{
       log('Parsing pasted SQL codes…','info');
       const codes=parsePastedCodes(document.getElementById('pasteInput').value);
       for(const c of codes)sqlSet.add(c);
-      log(`Pasted codes: ${codes.length.toLocaleString()} entries → ${sqlSet.size.toLocaleString()} unique`,'ok');
+      log(`Pasted input: ${codes.length.toLocaleString()} entries → ${sqlSet.size.toLocaleString()} unique`,'ok');
     }
-    log(`SQL index: ${sqlSet.size.toLocaleString()} unique codes`,'ok');
+    log(`SQL index built — ${sqlSet.size.toLocaleString()} unique codes`,'ok');
 
-    // ── Parse Dummy List ──
+    /* ── Parse Dummy List ── */
     log(`Parsing Dummy List (sheet: "${wb1.SheetNames[0]}")…`,'info');
     const dummyRows=XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]],{defval:''});
     const inputCount=dummyRows.length;
-    log(`Dummy List: ${inputCount.toLocaleString()} rows`,'ok');
+    log(`Dummy List: ${inputCount.toLocaleString()} rows parsed`,'ok');
 
     if(inputCount===0)throw new Error('Dummy List is empty.');
     if(!Object.prototype.hasOwnProperty.call(dummyRows[0],matCol))
-      throw new Error(`Column "${matCol}" not found in Dummy List. Check header name.`);
+      throw new Error(`Column "${matCol}" not found in Dummy List. Check the header name in Configuration.`);
 
-    // ── Build code→description Map (first occurrence wins) ──
-    // This guarantees im_code and IM_DESCR are always correctly paired by key, not by position.
+    /* ── Build im_code → IM_DESCR Map (key-based, first occurrence wins) ── */
     log('Building im_code → IM_DESCR lookup map…','info');
     const descMap=new Map();
     for(const row of dummyRows){
@@ -817,9 +965,9 @@ async function runTransform(){
         descMap.set(code,String(row[descCol]??'').trim());
       }
     }
-    log(`Description map built — ${descMap.size.toLocaleString()} entries`,'ok');
+    log(`Description map: ${descMap.size.toLocaleString()} unique code→description pairs`,'ok');
 
-    // ── Deduplication ──
+    /* ── Deduplication (internal + SQL cross-reference) ── */
     log('Running deduplication (internal + SQL cross-reference)…','info');
     const seen=new Set();
     const cleanCodes=[];
@@ -838,8 +986,8 @@ async function runTransform(){
       updateStats(inputCount,dupesRemoved,0,0);return;
     }
 
-    // ── Schema Transform — im_code matched to IM_DESCR via Map ──
-    log('Transforming schema → 6-column layout with keyed description matching…','info');
+    /* ── Schema Transform — description matched by Map key ── */
+    log('Transforming schema → 6-column layout…','info');
     const outputRows=cleanCodes.map(code=>({
       im_code:   code,
       loc_type:  'W',
@@ -848,26 +996,28 @@ async function runTransform(){
       MRP_LCNO:  'USTOR',
       IM_DESCR:  descMap.get(code)||'',
     }));
-    log(`Schema mapped — 6 cols × ${outputRows.length.toLocaleString()} rows`,'ok');
+    log(`Schema mapped — 6 columns × ${outputRows.length.toLocaleString()} rows`,'ok');
 
-    // ── Split + style ──
+    /* ── Split at 10,000 ── */
     const LIMIT=10000;
-    const extMap={biff8:'.xls',xlsx:'.xlsx',csv:'.csv'};
+    const extMap={xlsx:'.xlsx',biff8:'.xls',biff5:'.xls',csv:'.csv'};
     const ext=extMap[version]||'.xlsx';
     const chunks=outputRows.length<=LIMIT
       ?[{rows:outputRows,filename:outName+ext}]
       :[
-        {rows:outputRows.slice(0,LIMIT),  filename:outName+'_Part1'+ext},
-        {rows:outputRows.slice(LIMIT),    filename:outName+'_Part2'+ext},
+        {rows:outputRows.slice(0,LIMIT),filename:outName+'_Part1'+ext},
+        {rows:outputRows.slice(LIMIT),  filename:outName+'_Part2'+ext},
       ];
-
     if(chunks.length>1)log(`Output exceeds 10,000 rows — splitting into 2 files`,'warn');
 
-    log('Applying Excel formatting (Aptos Narrow · 11pt · All Borders)…','info');
+    /* ── Build + style workbooks ── */
+    const needsStyle=version!=='csv';
+    log(needsStyle
+      ?'Applying Excel formatting (Aptos Narrow · 11pt · All Borders · Bold header)…'
+      :'Building CSV output (no styling for CSV format)…','info');
+
     for(const chunk of chunks){
-      const wb=version==='csv'
-        ?buildWBNoStyle(chunk.rows)   // CSV: no style
-        :buildStyledWB(chunk.rows);   // XLS/XLSX: full style
+      const wb=needsStyle?buildStyledWB(chunk.rows):buildPlainWB(chunk.rows);
       compiledBatches.push({filename:chunk.filename,wb,rows:chunk.rows});
       log(`Compiled: ${chunk.filename}  (${chunk.rows.length.toLocaleString()} rows)`,'ok');
     }
@@ -888,13 +1038,9 @@ async function runTransform(){
   }
 }
 
-function buildWBNoStyle(rows){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Sheet1');
-  return wb;
-}
-
-// ══ STATS ══
+/* ════════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════════ */
 function updateStats(input,dupes,output,files){
   document.getElementById('stat-input').textContent =input.toLocaleString();
   document.getElementById('stat-dupes').textContent =dupes.toLocaleString();
@@ -903,9 +1049,12 @@ function updateStats(input,dupes,output,files){
   document.getElementById('statsSection').style.display='';
 }
 
-// ══ PREVIEW ══
+/* ════════════════════════════════════════════════════
+   PREVIEW
+════════════════════════════════════════════════════ */
 function renderPreview(rows){
-  const body=document.getElementById('previewBody');body.innerHTML='';
+  const body=document.getElementById('previewBody');
+  body.innerHTML='';
   rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
@@ -921,14 +1070,17 @@ function renderPreview(rows){
   document.getElementById('previewSection').style.display='';
 }
 
-// ══ BATCH CARDS ══
+/* ════════════════════════════════════════════════════
+   BATCH DOWNLOAD CARDS
+════════════════════════════════════════════════════ */
 function renderBatches(version){
-  const list=document.getElementById('batchList');list.innerHTML='';
-  const fmtLabel={biff8:'BIFF8',xlsx:'XLSX',csv:'CSV'};
+  const list=document.getElementById('batchList');
+  list.innerHTML='';
+  const fmtLabel={xlsx:'XLSX',biff8:'BIFF8',biff5:'BIFF5',csv:'CSV'};
   compiledBatches.forEach((b,i)=>{
     const item=document.createElement('div');
     item.className='batch-item';
-    item.style.animationDelay=(i*0.08)+'s';
+    item.style.animationDelay=(i*0.09)+'s';
     item.innerHTML=`
       <div class="b-idx">${i+1}</div>
       <div class="b-name">${esc(b.filename)}</div>
@@ -941,23 +1093,33 @@ function renderBatches(version){
     list.appendChild(item);
   });
   document.getElementById('downloadSection').style.display='';
-  setTimeout(()=>document.getElementById('downloadSection').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  setTimeout(()=>document.getElementById('downloadSection').scrollIntoView({behavior:'smooth',block:'start'}),120);
 }
 
-// ══ DOWNLOADS ══
+/* ════════════════════════════════════════════════════
+   DOWNLOAD
+════════════════════════════════════════════════════ */
 function downloadBatch(i){
-  const b=compiledBatches[i];if(!b)return;
-  const v=document.getElementById('versionSelect').value;
-  const t={biff8:'biff8',xlsx:'xlsx',csv:'csv'};
-  XLSX.writeFile(b.wb,b.filename,{bookType:t[v]||'xlsx',cellStyles:true});
+  const b=compiledBatches[i];
+  if(!b)return;
+  const version=document.getElementById('versionSelect').value;
+  // bookType mapping: biff5 → 'biff5', biff8 → 'biff8', xlsx → 'xlsx', csv → 'csv'
+  const bookTypeMap={xlsx:'xlsx',biff8:'biff8',biff5:'biff5',csv:'csv'};
+  XLSX.writeFile(b.wb,b.filename,{bookType:bookTypeMap[version]||'xlsx',cellStyles:true});
   log(`Downloaded: ${b.filename}`,'ok');
 }
 function downloadAll(){
   if(!compiledBatches.length)return;
-  compiledBatches.forEach((b,i)=>setTimeout(()=>downloadBatch(i),i*300));
+  log('Starting bulk download sequence…','info');
+  compiledBatches.forEach((_,i)=>setTimeout(()=>downloadBatch(i),i*350));
 }
 
-function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+/* ════════════════════════════════════════════════════
+   UTILITY
+════════════════════════════════════════════════════ */
+function esc(s){
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 </script>
 </body>
 </html>
